@@ -1,0 +1,45 @@
+[Unit]
+Description=LAN sniffer and mapper (netmapd)
+Documentation=file:///usr/local/share/doc/netmapd/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=netmapd
+Group=netmapd
+EnvironmentFile=-/etc/netmapd.env
+# Flags default from NETMAPD_* in the environment file.
+ExecStart=/usr/local/bin/netmapd --log /var/log/netmapd/events.jsonl $NETMAPD_ARGS
+Restart=always
+RestartSec=2
+
+# AF_PACKET + promiscuous. Survives binary replacement.
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+NoNewPrivileges=true
+
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectHostname=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_PACKET AF_UNIX AF_NETLINK
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+ReadWritePaths=/var/log/netmapd
+
+LimitNOFILE=4096
+MemoryMax=80M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

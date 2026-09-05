@@ -1,0 +1,8 @@
+/var/log/netmapd/*.jsonl {
+    weekly
+    rotate 8
+    compress
+    missingok
+    notifempty
+    copytruncate
+}
