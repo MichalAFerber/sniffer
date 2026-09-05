@@ -4,12 +4,46 @@
 #   sudo ./deploy/install.sh /path/to/netmapd-linux-arm64
 set -eu
 
-BIN_SRC=${1:-./dist/netmapd-linux-arm64}
+# Derive the default from THIS machine's architecture. The previous default was
+# ./dist/netmapd-linux-arm64 unconditionally, which places a binary that cannot
+# execute on any 32-bit Pi -- and every host this is deployed to today is armv7l.
+# A wrong binary fails at exec time inside systemd, where it reads as a unit that
+# will not start rather than as a build-target mistake.
+ARCH=$(uname -m)
+if [ $# -ge 1 ]; then
+    BIN_SRC=$1
+else
+    case "$ARCH" in
+    aarch64 | arm64) BIN_SRC=./dist/netmapd-linux-arm64 ;;
+    armv7l) BIN_SRC=./dist/netmapd-linux-armv7 ;;
+    armv6l) BIN_SRC=./dist/netmapd-linux-armv6 ;;
+    x86_64 | amd64) BIN_SRC=./dist/netmapd-linux-amd64 ;;
+    *)
+        echo "$0: unrecognised architecture '$ARCH'" >&2
+        echo "  pass the binary explicitly: $0 /path/to/netmapd-binary" >&2
+        exit 1
+        ;;
+    esac
+fi
+
 if [ ! -x "$BIN_SRC" ] && [ ! -f "$BIN_SRC" ]; then
     echo "usage: $0 /path/to/netmapd-binary" >&2
-    echo "missing: $BIN_SRC" >&2
+    echo "missing: $BIN_SRC (derived from arch '$ARCH')" >&2
+    echo "  build it with: make linux-armv7   # or the target matching this host" >&2
     exit 1
 fi
+
+# Refuse a binary that cannot run here, rather than installing it and leaving
+# systemd to report a unit that will not start. An arch mismatch is the likely
+# cause and the exec error does not say so.
+exec_err=$({ "$BIN_SRC" --help >/dev/null; } 2>&1) || true
+case "$exec_err" in
+*"format error"* | *"Exec format"* | *"cannot execute"*)
+    echo "$0: $BIN_SRC will not execute on this machine ($ARCH)" >&2
+    echo "  almost certainly built for the wrong architecture" >&2
+    exit 1
+    ;;
+esac
 
 id netmapd >/dev/null 2>&1 || useradd --system --home /nonexistent --shell /usr/sbin/nologin netmapd
 install -d -o netmapd -g netmapd -m 0750 /var/log/netmapd
