@@ -21,6 +21,9 @@ vet:
 pi:
 	$(CGO) GOOS=linux GOARCH=arm64 GOARM64=v8.0 go build $(GOFLAGS) -o $(OUT)/$(BIN)-linux-arm64 ./cmd/netmapd
 
+linux-armv7:
+	$(CGO) GOOS=linux GOARCH=arm GOARM=7 go build $(GOFLAGS) -o $(OUT)/$(BIN)-linux-armv7 ./cmd/netmapd
+
 linux-amd64:
 	$(CGO) GOOS=linux GOARCH=amd64 go build $(GOFLAGS) -o $(OUT)/$(BIN)-linux-amd64 ./cmd/netmapd
 
@@ -32,6 +35,7 @@ darwin:
 
 # Original Pi Zero / Pi 1 (32-bit ARMv6). Only if you still have one.
 pi-v6:
+	$(CGO) GOOS=linux GOARCH=arm GOARM=7 go build $(GOFLAGS) -o $(OUT)/$(BIN)-linux-armv7 ./cmd/netmapd
 	$(CGO) GOOS=linux GOARCH=arm GOARM=6 go build $(GOFLAGS) -o $(OUT)/$(BIN)-linux-armv6 ./cmd/netmapd
 
 dist:
