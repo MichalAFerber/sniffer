@@ -13,7 +13,7 @@
       "binding": "DB",
       "database_name": "sniffer",
       // Replace after: npx wrangler d1 create sniffer
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "16777587-6751-4a31-9257-5fdb73417e21",
       "migrations_dir": "migrations"
     }
   ]
