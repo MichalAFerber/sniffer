@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "test": "vitest run",
     "deploy": "wrangler deploy",
     "types": "wrangler types",
     "d1:create": "wrangler d1 create sniffer",
@@ -11,7 +12,9 @@
     "d1:migrate:remote": "wrangler d1 migrations apply sniffer --remote"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
     "typescript": "^5.9.2",
+    "vitest": "^4.1.11",
     "wrangler": "^4.131.2"
   }
 }

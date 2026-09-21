@@ -70,17 +70,25 @@ npx wrangler d1 create sniffer          # paste database_id into wrangler.jsonc
 npx wrangler d1 migrations apply sniffer --local
 npx wrangler d1 migrations apply sniffer --remote
 npx wrangler secret put INGEST_TOKEN
+npx wrangler secret put READ_TOKEN   # optional; see auth below
 npx wrangler deploy
 ```
 
 | Method | Path | Auth | Role |
 |---|---|---|---|
 | GET | `/health` | no | liveness |
-| POST | `/v1/ingest` | Bearer | upsert hosts/services/flows/names |
-| POST | `/v1/heartbeat` | Bearer | sensor last-seen |
-| GET | `/v1/hosts` | Bearer | recent hosts (`?sensor=`) |
-| GET | `/v1/services` | Bearer | open ports |
-| GET | `/v1/map` | Bearer | hosts + services + 1h flow edges |
+| POST | `/v1/ingest` | Bearer, `INGEST_TOKEN` only | upsert hosts/services/flows/names |
+| POST | `/v1/heartbeat` | Bearer, `INGEST_TOKEN` only | sensor last-seen |
+| GET | `/v1/hosts` | Bearer, `INGEST_TOKEN` or `READ_TOKEN` | recent hosts (`?sensor=`) |
+| GET | `/v1/services` | Bearer, `INGEST_TOKEN` or `READ_TOKEN` | open ports |
+| GET | `/v1/map` | Bearer, `INGEST_TOKEN` or `READ_TOKEN` | hosts + services + 1h flow edges |
+
+`INGEST_TOKEN` is the sensor's credential and admits every route. `READ_TOKEN`
+is optional and read-only: it admits the three `GET /v1/*` routes and is
+refused (401) on both POSTs. Give a read-only consumer (a dashboard, an
+export job) `READ_TOKEN` instead of `INGEST_TOKEN` so it can never forge the
+map, and so rotating one token doesn't require reissuing the other. Leaving
+`READ_TOKEN` unset is fine — `INGEST_TOKEN` alone still does everything.
 
 Agent:
 
