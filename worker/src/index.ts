@@ -81,15 +81,21 @@ async function handle(request: Request, env: Env, _ctx: ExecutionContext): Promi
     return json({ ok: true, service: "sniffer" });
   }
 
-  const tokenOK = await authorized(request, env);
-  if (!tokenOK) {
+  const level = await authorize(request, env);
+  if (level === "none") {
     return json({ error: "unauthorized" }, 401);
   }
 
   if (request.method === "POST" && url.pathname === "/v1/ingest") {
+    if (level !== "write") {
+      return json({ error: "unauthorized" }, 401);
+    }
     return ingest(request, env);
   }
   if (request.method === "POST" && url.pathname === "/v1/heartbeat") {
+    if (level !== "write") {
+      return json({ error: "unauthorized" }, 401);
+    }
     return heartbeat(request, env);
   }
   if (request.method === "GET" && url.pathname === "/v1/hosts") {
@@ -104,14 +110,22 @@ async function handle(request: Request, env: Env, _ctx: ExecutionContext): Promi
   return json({ error: "not found" }, 404);
 }
 
-async function authorized(request: Request, env: Env): Promise<boolean> {
-  const expected = env.INGEST_TOKEN;
-  if (!expected) {
-    return false;
-  }
+type AuthLevel = "none" | "read" | "write";
+
+// INGEST_TOKEN (the sensor's credential) admits every route. READ_TOKEN, when
+// set, admits only the GET routes — checked in handle(). Either comparison is
+// skipped when its secret is unset, so an unset READ_TOKEN never matches an
+// empty bearer and INGEST_TOKEN alone keeps the Worker fully functional.
+export async function authorize(request: Request, env: Env): Promise<AuthLevel> {
   const hdr = request.headers.get("Authorization") ?? "";
   const provided = hdr.toLowerCase().startsWith("bearer ") ? hdr.slice(7) : hdr;
-  return timingEqual(provided, expected);
+  if (env.INGEST_TOKEN && (await timingEqual(provided, env.INGEST_TOKEN))) {
+    return "write";
+  }
+  if (env.READ_TOKEN && (await timingEqual(provided, env.READ_TOKEN))) {
+    return "read";
+  }
+  return "none";
 }
 
 async function timingEqual(a: string, b: string): Promise<boolean> {

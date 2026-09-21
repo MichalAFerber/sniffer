@@ -17,3 +17,14 @@ jobs:
         run: CGO_ENABLED=0 go vet ./...
       - name: dist
         run: make dist
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: worker/.nvmrc
+          cache: npm
+          cache-dependency-path: worker/package-lock.json
+      - name: worker install
+        working-directory: worker
+        run: npm ci
+      - name: worker test
+        working-directory: worker
+        run: npm test

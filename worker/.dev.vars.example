@@ -1,1 +1,4 @@
 INGEST_TOKEN=dev-token-change-me
+# Optional. Read-only: admits the GET /v1/* routes only. Unset means only
+# INGEST_TOKEN is accepted.
+READ_TOKEN=dev-read-token-change-me
