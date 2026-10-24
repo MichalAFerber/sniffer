@@ -41,3 +41,28 @@ updates:
       gomod-major:
         patterns: ["*"]
         update-types: [major]
+
+  # The Worker's npm tree lives in worker/ (no root package.json), which is what
+  # ci.yml installs. Same entry as muster's /worker one.
+  - package-ecosystem: npm
+    directory: /worker
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
+    # Supply-chain filter: malicious versions are typically yanked within hours.
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+    groups:
+      npm-non-major:
+        patterns: ["*"]
+        update-types: [minor, patch]
+      npm-major:
+        patterns: ["*"]
+        update-types: [major]
