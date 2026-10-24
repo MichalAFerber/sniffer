@@ -25,6 +25,10 @@ jobs:
       - name: worker install
         working-directory: worker
         run: npm ci
+      # §15 audit: FULL tree, deliberately not --omit=dev; the dev half builds what ships.
+      - name: worker audit
+        working-directory: worker
+        run: npm audit --audit-level=high
       - name: worker test
         working-directory: worker
         run: npm test
